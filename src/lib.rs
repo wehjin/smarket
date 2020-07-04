@@ -21,9 +21,9 @@ impl Market {
 		rx.recv().unwrap()
 	}
 
-	pub fn update_share_price(&self, symbol: String, share_price: SharePrice) {
+	pub fn update_share_price(&self, symbol: &str, share_price: SharePrice) {
 		let (tx, rx) = channel();
-		self.tx.send(Msg::SetSharePrice(symbol, share_price, tx)).unwrap();
+		self.tx.send(Msg::SetSharePrice(symbol.to_string(), share_price, tx)).unwrap();
 		rx.recv().unwrap()
 	}
 

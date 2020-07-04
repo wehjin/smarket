@@ -7,7 +7,7 @@ fn persist() {
 	let diversifier = rand::random();
 	{
 		let market = setup("persist", diversifier);
-		market.update_share_price("nkla".to_string(), SharePrice::Float(2.0));
+		market.update_share_price("nkla", SharePrice::Float(2.0));
 	}
 	let market = setup("persist", diversifier);
 	let share_prices = market.read_share_prices(vec!["nkla".to_string()]);
@@ -30,6 +30,6 @@ fn setup(name: &str, diversifier: u64) -> Market {
 		dir
 	};
 	let market = Market::open(&data_folder);
-	market.update_share_price("tsla".to_string(), 1007.22.into());
+	market.update_share_price("tsla", 1007.22.into());
 	market
 }
