@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::Path;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 
@@ -8,13 +9,13 @@ pub use self::basics::*;
 pub struct Market { tx: Sender<Msg> }
 
 impl Market {
-	pub fn txn_price(&self, symbol: String, txn_size: TxnSize) -> Option<TxnPrice> {
+	pub fn read_txn_price(&self, symbol: String, txn_size: TxnSize) -> Option<TxnPrice> {
 		let (tx, rx) = channel();
 		self.tx.send(Msg::GetTxnPrice(symbol, txn_size, tx)).unwrap();
 		rx.recv().unwrap()
 	}
 
-	pub fn share_prices(&self, symbols: Vec<String>) -> HashMap<String, Option<SharePrice>> {
+	pub fn read_share_prices(&self, symbols: Vec<String>) -> HashMap<String, Option<SharePrice>> {
 		let (tx, rx) = channel();
 		self.tx.send(Msg::GetSharePrices(symbols, tx)).unwrap();
 		rx.recv().unwrap()
@@ -24,7 +25,10 @@ impl Market {
 		self.tx.send(Msg::SetSharePrice(symbol, share_price)).unwrap();
 	}
 
-	pub fn open() -> Self {
+	pub fn open(folder: &Path) -> Self {
+		let mut folder = folder.to_path_buf();
+		folder.push("smarket");
+		std::fs::create_dir_all(&folder).unwrap();
 		let (tx, rx) = channel();
 		thread::spawn(move || loop_messages(rx));
 		Market { tx }
