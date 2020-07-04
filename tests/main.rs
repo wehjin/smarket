@@ -3,11 +3,10 @@ extern crate smarket;
 
 use smarket::{Market, SharePrice, TxnPrice};
 
-#[test]
-fn txn_price() {
-	let market = setup();
-	let txn_price = market.txn_price("tsla".to_string(), 100.into());
-	assert_eq!(txn_price, Some(TxnPrice::Float(100722.0)));
+fn setup() -> Market {
+	let market = Market::open();
+	market.update_share_price("tsla".to_string(), 1007.22.into());
+	market
 }
 
 #[test]
@@ -21,8 +20,9 @@ fn share_prices() {
 	assert_eq!(share_prices["nkla"], None);
 }
 
-fn setup() -> Market {
-	let market = Market::open();
-	market.update_share_price("tsla".to_string(), 1007.22.into());
-	market
+#[test]
+fn txn_price() {
+	let market = setup();
+	let txn_price = market.txn_price("tsla".to_string(), 100.into());
+	assert_eq!(txn_price, Some(TxnPrice::Float(100722.0)));
 }
