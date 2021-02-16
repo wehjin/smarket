@@ -9,3 +9,6 @@ edition = "2018"
 [dependencies]
 echo-lib = { git = "https://github.com/wehjin/gal-core.git" }
 rand = "0.7.3"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

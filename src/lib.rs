@@ -1,3 +1,5 @@
+extern crate reqwest;
+
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::mpsc::{channel, Sender};
@@ -10,6 +12,7 @@ pub use self::basics::*;
 
 mod basics;
 mod sample;
+pub mod yf;
 
 #[derive(Debug, Clone)]
 pub struct Market { tx: Sender<Msg> }
