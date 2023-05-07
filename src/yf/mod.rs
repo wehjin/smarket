@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use std::error::Error;
+use std::fmt::{Display, Formatter};
 
 use serde::Deserialize;
 
@@ -22,17 +23,33 @@ pub enum PricingResult {
 	NoQuote { request_response: String, symbol: String },
 }
 
+#[derive(Debug)]
+pub struct PriceError {
+	pub url: String,
+	pub text: Option<String>,
+	pub serde_error: Option<serde_json::Error>,
+}
+
+impl Error for PriceError {}
+
+impl Display for PriceError {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		f.write_str(&format!("{:?}", self))
+	}
+}
+
 /// Acquires prices for various assets from their symbol
 pub fn price_assets<S: AsRef<str>>(symbols: &Vec<S>) -> Result<HashMap<String, PricingResult>, Box<dyn Error>> {
 	let symbols = symbols.iter().map(|it| it.as_ref().trim().to_uppercase()).collect::<Vec<_>>();
 	let mut params = STATIC_PRICING_PARAMS.iter().map(|it| it.to_string()).collect::<Vec<_>>();
 	params.extend(vec![
 		format!("fields={}", PRICING_FIELDS.join("%2C")),
-		format!("symbols={}", symbols.join("%2C"))
+		format!("symbols={}", symbols.join("%2C")),
 	]);
-	let url = format!("https://query1.finance.yahoo.com/v7/finance/quote?{}", params.join("&"));
-	let request_response = reqwest::blocking::get(&url)?.json::<RequestResponse>()?;
-	let quote_results = request_response.quote_response.result
+	let url = format!("https://query1.finance.yahoo.com/v6/finance/quote?{}", params.join("&"));
+	let text = reqwest::blocking::get(&url)?.text()?;
+	let response: RequestResponse = serde_json::from_str(&text).map_err(|e| PriceError { url, text: Some(text), serde_error: Some(e) })?;
+	let quote_results = response.quote_response.result
 		.iter()
 		.map(|it| (it.symbol.to_uppercase(), it.clone()))
 		.collect::<HashMap<String, _>>();
@@ -46,7 +63,7 @@ pub fn price_assets<S: AsRef<str>>(symbols: &Vec<S>) -> Result<HashMap<String, P
 				}
 				None => PricingResult::NoQuote {
 					symbol: symbol.to_string(),
-					request_response: format!("{:?}", request_response),
+					request_response: format!("{:?}", response),
 				},
 			};
 			(symbol.clone(), pricing_result)
@@ -58,7 +75,7 @@ pub fn price_assets<S: AsRef<str>>(symbols: &Vec<S>) -> Result<HashMap<String, P
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct RequestResponse {
-	pub quote_response: QuoteResponse
+	pub quote_response: QuoteResponse,
 }
 
 #[derive(Deserialize, Clone, Debug)]
